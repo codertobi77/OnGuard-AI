@@ -1,0 +1,28 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Assessment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  // Clinical Profile (Anonymized)
+  lesionLocation String
+  duration       String
+  symptoms       String[]
+  familyHistory  Boolean
+
+  // AI Outputs
+  riskScore         Float
+  riskLevel         String
+  clinicalRationale String
+  recommendation    String
+
+  // Compliance & Privacy
+  isAnonymized Boolean @default(true)
+}
