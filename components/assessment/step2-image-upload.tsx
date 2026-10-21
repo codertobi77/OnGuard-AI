@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { HoldToConfirm } from "@/components/interior/hold-to-confirm";
+import { Lightbox } from "@/components/interior/lightbox";
 import { useAssessmentStore } from "@/store/assessment";
 import { MAX_IMAGE_BYTES } from "@/types";
 
@@ -34,8 +36,10 @@ export function Step2ImageUpload({ onNext, onBack }: Step2ImageUploadProps) {
   const { t } = useI18n();
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const figureRef = useRef<HTMLElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const processFile = (file: File) => {
     setError(null);
@@ -121,17 +125,25 @@ export function Step2ImageUpload({ onNext, onBack }: Step2ImageUploadProps) {
           {imageDataUrl ? (
             <div className="grid gap-3">
               <figure
+                ref={figureRef}
                 className={cn(
                   "overflow-hidden rounded-xl border bg-muted/40 p-2",
                   isDragging && "border-primary ring-2 ring-primary/40",
                 )}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- local user-provided preview, not a remote asset */}
-                <img
-                  src={imageDataUrl}
-                  alt={t("step2.preview")}
-                  className="mx-auto h-auto max-h-96 w-auto max-w-full rounded-lg object-contain"
-                />
+                <button
+                  type="button"
+                  onClick={() => setLightboxOpen(true)}
+                  aria-label={t("step2.zoomHint")}
+                  className="mx-auto block w-full cursor-zoom-in rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- local user-provided preview, not a remote asset */}
+                  <img
+                    src={imageDataUrl}
+                    alt={t("step2.preview")}
+                    className="mx-auto h-auto max-h-96 w-auto max-w-full rounded-lg object-contain"
+                  />
+                </button>
               </figure>
               <div className="flex flex-wrap justify-center gap-2">
                 <Button
@@ -141,10 +153,17 @@ export function Step2ImageUpload({ onNext, onBack }: Step2ImageUploadProps) {
                   <RefreshCw data-icon="inline-start" aria-hidden="true" />
                   {t("step2.replace")}
                 </Button>
-                <Button variant="outline" onClick={handleRemove}>
-                  <Trash2 data-icon="inline-start" aria-hidden="true" />
-                  {t("step2.remove")}
-                </Button>
+                <HoldToConfirm
+                  tone="destructive"
+                  duration={1500}
+                  onConfirm={handleRemove}
+                  confirmLabel={t("step2.removed")}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Trash2 className="size-4" aria-hidden="true" />
+                    {t("step2.remove")}
+                  </span>
+                </HoldToConfirm>
               </div>
             </div>
           ) : (
@@ -191,6 +210,17 @@ export function Step2ImageUpload({ onNext, onBack }: Step2ImageUploadProps) {
             <ArrowRight data-icon="inline-end" aria-hidden="true" />
           </Button>
         </div>
+
+        {imageDataUrl && (
+          <Lightbox
+            open={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+            src={imageDataUrl}
+            alt={t("step2.preview")}
+            originRef={figureRef}
+            caption={t("step2.preview")}
+          />
+        )}
       </CardContent>
     </Card>
   );

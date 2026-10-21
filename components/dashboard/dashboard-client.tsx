@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ClipboardList, Database } from "lucide-react";
 import {
@@ -17,6 +18,13 @@ import {
   symptomLabels,
 } from "@/lib/labels";
 import { riskBadgeClass, riskTextClass } from "@/lib/risk";
+import { SegmentedControl } from "@/components/interior/segmented-control";
+import {
+  SortableTable,
+  type SortableColumn,
+} from "@/components/interior/sortable-table";
+import { StickyHeader } from "@/components/interior/sticky-header";
+import { ValueFlash } from "@/components/interior/value-flash";
 import type { Duration, LesionLocation, RiskLevel, Symptom } from "@/types";
 
 export interface DashboardRow {
@@ -41,7 +49,7 @@ function StatCard({
   valueClass,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   valueClass?: string;
 }) {
   return (
@@ -61,12 +69,18 @@ function StatCard({
 export function DashboardClient({ rows, dbAvailable }: DashboardClientProps) {
   const { lang, t } = useI18n();
 
-  const total = rows.length;
+  const [filter, setFilter] = useState<"all" | "high">("all");
+  const visibleRows =
+    filter === "high"
+      ? rows.filter((row) => row.riskLevel === "High Risk")
+      : rows;
+
+  const total = visibleRows.length;
   const averageScore =
     total > 0
-      ? rows.reduce((sum, row) => sum + row.riskScore, 0) / total
+      ? visibleRows.reduce((sum, row) => sum + row.riskScore, 0) / total
       : 0;
-  const highRiskCount = rows.filter(
+  const highRiskCount = visibleRows.filter(
     (row) => row.riskLevel === "High Risk",
   ).length;
   const dateFormatter = new Intl.DateTimeFormat(
@@ -74,121 +88,159 @@ export function DashboardClient({ rows, dbAvailable }: DashboardClientProps) {
     { dateStyle: "medium", timeStyle: "short" },
   );
 
+  const pageHeader = (
+    <header className="grid gap-1">
+      <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+        {t("dashboard.title")}
+      </h1>
+      <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
+    </header>
+  );
+
+  const columns: SortableColumn<DashboardRow>[] = [
+    {
+      id: "date",
+      header: t("dashboard.date"),
+      width: "176px",
+      numeric: true,
+      value: (row) => new Date(row.createdAt).getTime(),
+      cell: (row) => dateFormatter.format(new Date(row.createdAt)),
+    },
+    {
+      id: "location",
+      header: t("dashboard.location"),
+      value: (row) => locationLabels[lang][row.lesionLocation],
+    },
+    {
+      id: "score",
+      header: t("dashboard.score"),
+      width: "72px",
+      numeric: true,
+      align: "end",
+      value: (row) => row.riskScore,
+      cell: (row) => (
+        <span className={cn("font-semibold", riskTextClass(row.riskLevel))}>
+          {row.riskScore.toFixed(1)}
+        </span>
+      ),
+    },
+    {
+      id: "level",
+      header: t("dashboard.level"),
+      width: "128px",
+      value: (row) => riskLevelLabels[lang][row.riskLevel],
+      cell: (row) => (
+        <Badge variant="outline" className={riskBadgeClass(row.riskLevel)}>
+          {riskLevelLabels[lang][row.riskLevel]}
+        </Badge>
+      ),
+    },
+    {
+      id: "symptoms",
+      header: t("dashboard.symptoms"),
+      value: (row) =>
+        row.symptoms.length
+          ? row.symptoms
+              .map((symptom) => symptomLabels[lang][symptom])
+              .join(", ")
+          : t("dashboard.noSymptoms"),
+    },
+    {
+      id: "familyHistory",
+      header: t("dashboard.familyHistory"),
+      width: "104px",
+      numeric: true,
+      value: (row) => (row.familyHistory ? 1 : 0),
+      cell: (row) => (row.familyHistory ? t("common.yes") : t("common.no")),
+    },
+  ];
+
   return (
     <div className="mx-auto grid w-full max-w-6xl flex-1 gap-6 px-4 py-10 sm:px-6">
-      <header className="grid gap-1">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-          {t("dashboard.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
-      </header>
-
       {!dbAvailable ? (
-        <div className="grid gap-4">
-          <Alert>
-            <Database className="size-4" aria-hidden="true" />
-            <AlertDescription>{t("dashboard.dbUnavailable")}</AlertDescription>
-          </Alert>
-          <div>
-            <Button asChild className="w-fit">
-              <Link href="/assess">{t("dashboard.viewCta")}</Link>
-            </Button>
-          </div>
-        </div>
-      ) : total === 0 ? (
-        <Card className="mx-auto w-full max-w-md text-center">
-          <CardContent className="grid justify-center gap-4 py-4">
-            <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-accent text-primary">
-              <ClipboardList className="size-6" aria-hidden="true" />
-            </span>
-            <p className="text-sm text-muted-foreground">{t("dashboard.empty")}</p>
-            <Button asChild className="mx-auto">
-              <Link href="/assess">{t("dashboard.viewCta")}</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard label={t("dashboard.total")} value={String(total)} />
-            <StatCard
-              label={t("dashboard.avgScore")}
-              value={averageScore.toFixed(1)}
-            />
-            <StatCard
-              label={t("dashboard.highRisk")}
-              value={String(highRiskCount)}
-              valueClass={highRiskCount > 0 ? "text-red-600" : undefined}
-            />
-          </div>
-
-          <div className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      {t("dashboard.date")}
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      {t("dashboard.location")}
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      {t("dashboard.score")}
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      {t("dashboard.level")}
-                    </th>
-                    <th scope="col" className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">
-                      {t("dashboard.symptoms")}
-                    </th>
-                    <th scope="col" className="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">
-                      {t("dashboard.familyHistory")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.id} className="border-b last:border-0">
-                      <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-                        {dateFormatter.format(new Date(row.createdAt))}
-                      </td>
-                      <td className="px-4 py-3">
-                        {locationLabels[lang][row.lesionLocation]}
-                      </td>
-                      <td
-                        className={cn(
-                          "px-4 py-3 font-semibold",
-                          riskTextClass(row.riskLevel),
-                        )}
-                      >
-                        {row.riskScore.toFixed(1)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant="outline"
-                          className={riskBadgeClass(row.riskLevel)}
-                        >
-                          {riskLevelLabels[lang][row.riskLevel]}
-                        </Badge>
-                      </td>
-                      <td className="hidden px-4 py-3 md:table-cell">
-                        {row.symptoms.length
-                          ? row.symptoms
-                              .map((symptom) => symptomLabels[lang][symptom])
-                              .join(", ")
-                          : t("dashboard.noSymptoms")}
-                      </td>
-                      <td className="hidden px-4 py-3 lg:table-cell">
-                        {row.familyHistory ? t("common.yes") : t("common.no")}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {pageHeader}
+          <div className="grid gap-4">
+            <Alert>
+              <Database className="size-4" aria-hidden="true" />
+              <AlertDescription>{t("dashboard.dbUnavailable")}</AlertDescription>
+            </Alert>
+            <div>
+              <Button asChild className="w-fit">
+                <Link href="/assess">{t("dashboard.viewCta")}</Link>
+              </Button>
             </div>
           </div>
         </>
+      ) : rows.length === 0 ? (
+        <>
+          {pageHeader}
+          <Card className="mx-auto w-full max-w-md text-center">
+            <CardContent className="grid justify-center gap-4 py-4">
+              <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-accent text-primary">
+                <ClipboardList className="size-6" aria-hidden="true" />
+              </span>
+              <p className="text-sm text-muted-foreground">{t("dashboard.empty")}</p>
+              <Button asChild className="mx-auto">
+                <Link href="/assess">{t("dashboard.viewCta")}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <StickyHeader
+          title={t("dashboard.title")}
+          subtitle={t("dashboard.subtitle")}
+          maxHeight={640}
+          actions={
+            <SegmentedControl
+              options={[
+                { value: "all", label: t("dashboard.filterAll") },
+                { value: "high", label: t("dashboard.filterHigh") },
+              ]}
+              label={t("dashboard.filterLabel")}
+              value={filter}
+              onValueChange={(next) =>
+                setFilter(next === "high" ? "high" : "all")
+              }
+            />
+          }
+        >
+          <div className="grid gap-4 px-4 pb-4">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <StatCard label={t("dashboard.total")} value={String(total)} />
+              <StatCard
+                label={t("dashboard.avgScore")}
+                value={
+                  <ValueFlash
+                    value={Number(averageScore.toFixed(1))}
+                    format={(v) => v.toFixed(1)}
+                    label={t("dashboard.avgScore")}
+                    className="text-2xl! font-semibold!"
+                  />
+                }
+              />
+              <StatCard
+                label={t("dashboard.highRisk")}
+                value={String(highRiskCount)}
+                valueClass={highRiskCount > 0 ? "text-red-600" : undefined}
+              />
+            </div>
+
+            <SortableTable
+              rows={visibleRows}
+              columns={columns}
+              getRowId={(row) => row.id}
+              label={t("dashboard.tableLabel")}
+              rowHeight={44}
+              markable
+              defaultSort={{ columnId: "date", direction: "desc" }}
+              getRowLabel={(row) =>
+                `${locationLabels[lang][row.lesionLocation]} — ${dateFormatter.format(new Date(row.createdAt))}`
+              }
+            />
+          </div>
+        </StickyHeader>
       )}
     </div>
   );

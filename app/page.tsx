@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Award,
@@ -15,6 +16,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PressDepth } from "@/components/interior/press-depth";
+import { TextReveal } from "@/components/interior/text-reveal";
 import { MedicalDisclaimer } from "@/components/shared/medical-disclaimer";
 import { useI18n } from "@/lib/i18n";
 
@@ -33,6 +36,7 @@ const FEATURES = [
 
 export default function HomePage() {
   const { t } = useI18n();
+  const router = useRouter();
 
   return (
     <>
@@ -48,18 +52,19 @@ export default function HomePage() {
             {t("landing.badge")}
           </Badge>
           <h1 className="font-heading max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-            {t("landing.title")}
+            <TextReveal text={t("landing.title")} className="text-white" />
           </h1>
           <p className="max-w-2xl text-pretty text-base text-slate-300 sm:text-lg">
             {t("landing.subtitle")}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" asChild>
-              <Link href="/assess">
-                {t("landing.cta")}
-                <ArrowRight data-icon="inline-end" aria-hidden="true" />
-              </Link>
-            </Button>
+            <PressDepth
+              onClick={() => router.push("/assess")}
+              className="h-11! px-6! text-sm!"
+            >
+              {t("landing.cta")}
+              <ArrowRight data-icon="inline-end" aria-hidden="true" />
+            </PressDepth>
             <Button
               size="lg"
               variant="outline"

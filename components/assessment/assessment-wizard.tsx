@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { BrainCircuit, ClipboardList, FileText, ImageUp } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import {
+  useWizard,
+  type WizardDirection,
+} from "@/components/interior/wizard-steps";
 import { TOTAL_STEPS, useAssessmentStore } from "@/store/assessment";
 import { Step1Profile } from "./step1-profile";
 import { Step2ImageUpload } from "./step2-image-upload";
@@ -19,6 +24,9 @@ const STEP_META = [
 ] as const;
 
 type StepState = "done" | "active" | "upcoming";
+
+const CROSSFADE = { type: "spring", stiffness: 260, damping: 34, mass: 0.8 } as const;
+const EXIT_EASE = [0.4, 0, 1, 1] as const;
 
 export function AssessmentWizard() {
   const step = useAssessmentStore((state) => state.step);
@@ -38,6 +46,30 @@ export function AssessmentWizard() {
   useEffect(() => {
     if (effectiveStep !== step) setStep(effectiveStep);
   }, [effectiveStep, step, setStep]);
+
+  const reduced = useReducedMotion();
+  const wizard = useWizard({
+    total: TOTAL_STEPS,
+    index: effectiveStep - 1,
+    onIndexChange: (index) => setStep(index + 1),
+  });
+
+  const variants = useMemo(
+    () => ({
+      enter: (d: WizardDirection) =>
+        reduced ? { opacity: 0 } : { opacity: 0, x: d * 22 },
+      center: reduced ? { opacity: 1 } : { opacity: 1, x: 0 },
+      exit: (d: WizardDirection) =>
+        reduced
+          ? { opacity: 0, transition: { duration: 0 } }
+          : {
+              opacity: 0,
+              x: d * -22,
+              transition: { duration: 0.14, ease: EXIT_EASE },
+            },
+    }),
+    [reduced],
+  );
 
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-6">
@@ -64,7 +96,7 @@ export function AssessmentWizard() {
                   <button
                     type="button"
                     disabled={state !== "done"}
-                    onClick={() => setStep(stepNumber)}
+                    onClick={() => wizard.goTo(index)}
                     className={cn(
                       "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                       state === "active" &&
@@ -88,17 +120,24 @@ export function AssessmentWizard() {
         </nav>
       </header>
 
-      <div
-        key={effectiveStep}
-        className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-      >
-        {effectiveStep === 1 && <Step1Profile onNext={() => setStep(2)} />}
-        {effectiveStep === 2 && (
-          <Step2ImageUpload onNext={() => setStep(3)} onBack={() => setStep(1)} />
-        )}
-        {effectiveStep === 3 && <Step3Analysis />}
-        {effectiveStep === 4 && response && <Step4Report response={response} />}
-      </div>
+      <AnimatePresence initial={false} custom={wizard.direction} mode="wait">
+        <motion.div
+          key={effectiveStep}
+          custom={wizard.direction}
+          variants={variants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={reduced ? { duration: 0 } : CROSSFADE}
+        >
+          {effectiveStep === 1 && <Step1Profile onNext={() => setStep(2)} />}
+          {effectiveStep === 2 && (
+            <Step2ImageUpload onNext={() => setStep(3)} onBack={() => setStep(1)} />
+          )}
+          {effectiveStep === 3 && <Step3Analysis />}
+          {effectiveStep === 4 && response && <Step4Report response={response} />}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

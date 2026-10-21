@@ -3,10 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  FileDown,
-  FileJson,
   LayoutDashboard,
-  LoaderCircle,
   RotateCcw,
   Stethoscope,
   TriangleAlert,
@@ -33,6 +30,11 @@ import {
   symptomLabels,
 } from "@/lib/labels";
 import { riskAccentClass } from "@/lib/risk";
+import { CopyButton } from "@/components/interior/copy-button";
+import { HoldToConfirm } from "@/components/interior/hold-to-confirm";
+import { LoadingButton } from "@/components/interior/loading-button";
+import { ShowMore } from "@/components/interior/show-more";
+import { Tooltip } from "@/components/interior/tooltip-group";
 import { RiskGauge } from "./risk-gauge";
 import { useAssessmentStore } from "@/store/assessment";
 import type { AnalyzeResponse } from "@/types";
@@ -100,8 +102,6 @@ export function Step4Report({ response }: { response: AnalyzeResponse }) {
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
-    } catch {
-      setDownloadError(true);
     } finally {
       setDownloading(null);
     }
@@ -147,6 +147,25 @@ export function Step4Report({ response }: { response: AnalyzeResponse }) {
                 ? t("step4.saved")
                 : t("step4.notSaved")}
             </span>
+            {response.assessmentId && (
+              <span className="inline-flex items-center gap-2">
+                <span>
+                  {t("step4.idLabel")}: {" "}
+                  <span className="font-mono text-[11px]">
+                    {response.assessmentId}
+                  </span>
+                </span>
+                <Tooltip label={t("step4.copyIdHint")}>
+                  <CopyButton
+                    value={response.assessmentId}
+                    label={t("step4.copyId")}
+                    copiedLabel={t("step4.copyIdCopied")}
+                    errorLabel={t("step4.copyIdFailed")}
+                    className="h-7! px-2.5! text-[11px]!"
+                  />
+                </Tooltip>
+              </span>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -213,9 +232,16 @@ export function Step4Report({ response }: { response: AnalyzeResponse }) {
           <CardTitle>{t("step4.rationaleTitle")}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <p className="text-sm leading-relaxed text-foreground/90">
-            {result.clinicalRationale}
-          </p>
+          <ShowMore
+            lines={3}
+            moreLabel={t("common.showMore")}
+            lessLabel={t("common.showLess")}
+            label={t("step4.rationaleTitle")}
+          >
+            <p className="text-sm leading-relaxed text-foreground/90">
+              {result.clinicalRationale}
+            </p>
+          </ShowMore>
           <Alert className={riskAccentClass(level)}>
             <Stethoscope className="size-4" aria-hidden="true" />
             <AlertTitle>{t("step4.recommendationTitle")}</AlertTitle>
@@ -235,33 +261,36 @@ export function Step4Report({ response }: { response: AnalyzeResponse }) {
 
       {/* Actions */}
       <div className="flex flex-wrap items-center justify-center gap-2 pb-2">
-        <Button
-          onClick={() => void downloadReport("pdf")}
-          disabled={downloading !== null}
+        <LoadingButton
+          onAction={() => downloadReport("pdf")}
+          disabled={downloading === "json"}
+          pendingLabel={t("step4.generating")}
+          successLabel={t("step4.downloaded")}
+          errorLabel={t("step4.downloadFailed")}
+          onError={() => setDownloadError(true)}
         >
-          {downloading === "pdf" ? (
-            <LoaderCircle className="animate-spin" aria-hidden="true" />
-          ) : (
-            <FileDown data-icon="inline-start" aria-hidden="true" />
-          )}
           {t("step4.downloadPdf")}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => void downloadReport("json")}
-          disabled={downloading !== null}
+        </LoadingButton>
+        <LoadingButton
+          onAction={() => downloadReport("json")}
+          disabled={downloading === "pdf"}
+          pendingLabel={t("step4.generating")}
+          successLabel={t("step4.downloaded")}
+          errorLabel={t("step4.downloadFailed")}
+          onError={() => setDownloadError(true)}
         >
-          {downloading === "json" ? (
-            <LoaderCircle className="animate-spin" aria-hidden="true" />
-          ) : (
-            <FileJson data-icon="inline-start" aria-hidden="true" />
-          )}
           {t("step4.downloadJson")}
-        </Button>
-        <Button variant="outline" onClick={reset}>
-          <RotateCcw data-icon="inline-start" aria-hidden="true" />
-          {t("step4.newAssessment")}
-        </Button>
+        </LoadingButton>
+        <HoldToConfirm
+          duration={1500}
+          onConfirm={reset}
+          confirmLabel={t("step4.resetDone")}
+        >
+          <span className="flex items-center gap-1.5">
+            <RotateCcw className="size-4" aria-hidden="true" />
+            {t("step4.newAssessment")}
+          </span>
+        </HoldToConfirm>
         <Button variant="ghost" asChild>
           <Link href="/dashboard">
             {t("step4.viewDashboard")}

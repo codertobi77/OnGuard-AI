@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useI18n } from "@/lib/i18n";
+import { TaskSteps } from "@/components/interior/task-steps";
 import { useAssessmentStore } from "@/store/assessment";
 import type { AnalyzeResponse } from "@/types";
 
@@ -29,21 +30,27 @@ export function Step3Analysis() {
   const setStep = useAssessmentStore((state) => state.setStep);
   const { lang, t } = useI18n();
 
-  const [messageIndex, setMessageIndex] = useState(0);
+  const [taskIndex, setTaskIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const failed = error !== null;
 
-  // Rotate the status messages while the analysis is running.
+  // Advance the analysis task list while the request is in flight.
   useEffect(() => {
+    if (error) return;
     const timer = window.setInterval(
-      () => setMessageIndex((index) => (index + 1) % ANALYSIS_MESSAGES.length),
-      2400,
+      () =>
+        setTaskIndex((index) =>
+          Math.min(index + 1, ANALYSIS_MESSAGES.length - 1),
+        ),
+      3200,
     );
     return () => window.clearInterval(timer);
-  }, []);
+  }, [error]);
 
   const runAnalysis = useCallback(
     async (signal?: AbortSignal) => {
       if (!clinicalData || !imageBase64) return;
+      setTaskIndex(0);
       try {
         const response = await fetch("/api/analyze", {
           method: "POST",
@@ -117,13 +124,16 @@ export function Step3Analysis() {
                 aria-hidden="true"
               />
             </span>
-            <div
-              key={messageIndex}
-              aria-live="polite"
-              className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300 text-center text-sm font-medium text-muted-foreground"
-            >
-              {t(ANALYSIS_MESSAGES[messageIndex])}
-            </div>
+            <TaskSteps
+              steps={ANALYSIS_MESSAGES.map((key) => ({
+                id: key,
+                label: t(key),
+              }))}
+              current={taskIndex}
+              failed={failed}
+              label={t("step3.progress")}
+              className="w-full max-w-sm"
+            />
           </div>
         )}
       </CardContent>

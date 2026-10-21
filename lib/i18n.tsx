@@ -22,6 +22,8 @@ const en = {
   "common.no": "No",
   "common.retry": "Try again",
   "common.loading": "Loading…",
+  "common.showMore": "Show more",
+  "common.showLess": "Show less",
 
   // Navigation
   "nav.home": "Home",
@@ -30,6 +32,8 @@ const en = {
 
   // Medical disclaimer
   "disclaimer.title": "Medical Disclaimer",
+  "disclaimer.dismiss": "Dismiss notice",
+  "disclaimer.dismissed": "Notice dismissed.",
   "disclaimer.text":
     "OnGuard AI is a pre-diagnostic support tool intended to assist healthcare professionals. It does not replace a medical opinion, diagnosis, or consultation with a qualified dermatologist. Always seek professional medical advice for any skin concern.",
 
@@ -96,6 +100,8 @@ const en = {
   "step2.error.type": "Unsupported format. Please use a JPEG or PNG image.",
   "step2.error.size": "Image too large. Maximum size is 10 MB.",
   "step2.error.read": "Could not read the image file. Please try another file.",
+  "step2.zoomHint": "Open the image viewer",
+  "step2.removed": "Removed",
 
   // Step 3 — Analysis
   "step3.title": "Multimodal Analysis",
@@ -104,6 +110,7 @@ const en = {
   "step3.msg2": "Cross-referencing clinical data…",
   "step3.msg3": "Computing risk stratification…",
   "step3.error": "The analysis could not be completed. Please try again.",
+  "step3.progress": "Analysis progress",
 
   // Step 4 — Report
   "step4.title": "Risk Stratification Report",
@@ -129,6 +136,15 @@ const en = {
   "step4.engineHeuristic": "Built-in heuristic engine (demo)",
   "step4.saved": "Assessment saved to database",
   "step4.notSaved": "Not saved — database unavailable",
+  "step4.idLabel": "Assessment ID",
+  "step4.copyId": "Copy ID",
+  "step4.copyIdCopied": "Copied",
+  "step4.copyIdFailed": "Failed",
+  "step4.copyIdHint": "Copy the assessment ID",
+  "step4.generating": "Generating…",
+  "step4.downloaded": "Downloaded",
+  "step4.downloadFailed": "Failed — retry",
+  "step4.resetDone": "Assessment cleared",
 
   // Dashboard
   "dashboard.title": "Results Dashboard",
@@ -147,6 +163,10 @@ const en = {
   "dashboard.familyHistory": "Family history",
   "dashboard.noSymptoms": "None reported",
   "dashboard.viewCta": "Start an assessment",
+  "dashboard.filterLabel": "Filter by risk level",
+  "dashboard.filterAll": "All",
+  "dashboard.filterHigh": "High risk",
+  "dashboard.tableLabel": "Assessment history",
 
   // Language toggle
   "lang.toggle": "Change language",
@@ -162,6 +182,8 @@ const fr: Record<MessageKey, string> = {
   "common.no": "Non",
   "common.retry": "Réessayer",
   "common.loading": "Chargement…",
+  "common.showMore": "Afficher plus",
+  "common.showLess": "Réduire",
 
   // Navigation
   "nav.home": "Accueil",
@@ -170,6 +192,8 @@ const fr: Record<MessageKey, string> = {
 
   // Medical disclaimer
   "disclaimer.title": "Avertissement médical",
+  "disclaimer.dismiss": "Fermer l'avertissement",
+  "disclaimer.dismissed": "Avertissement fermé.",
   "disclaimer.text":
     "OnGuard AI est un outil d'aide au pré-diagnostic destiné à assister les professionnels de santé. Il ne remplace en aucun cas un avis médical, un diagnostic ou une consultation auprès d'un dermatologue qualifié. Consultez toujours un professionnel de santé pour toute anomalie cutanée.",
 
@@ -236,6 +260,8 @@ const fr: Record<MessageKey, string> = {
   "step2.error.type": "Format non pris en charge. Utilisez une image JPEG ou PNG.",
   "step2.error.size": "Image trop volumineuse. Taille maximale : 10 Mo.",
   "step2.error.read": "Impossible de lire le fichier image. Réessayez avec un autre fichier.",
+  "step2.zoomHint": "Ouvrir la visionneuse",
+  "step2.removed": "Image supprimée",
 
   // Step 3 — Analysis
   "step3.title": "Analyse multimodale",
@@ -244,6 +270,7 @@ const fr: Record<MessageKey, string> = {
   "step3.msg2": "Croisement avec les données cliniques…",
   "step3.msg3": "Calcul de la stratification du risque…",
   "step3.error": "L'analyse n'a pas pu être menée à terme. Veuillez réessayer.",
+  "step3.progress": "Progression de l'analyse",
 
   // Step 4 — Report
   "step4.title": "Rapport de stratification du risque",
@@ -269,6 +296,15 @@ const fr: Record<MessageKey, string> = {
   "step4.engineHeuristic": "Moteur heuristique intégré (démo)",
   "step4.saved": "Évaluation enregistrée en base",
   "step4.notSaved": "Non enregistré — base de données indisponible",
+  "step4.idLabel": "Identifiant d'évaluation",
+  "step4.copyId": "Copier l'ID",
+  "step4.copyIdCopied": "Copié",
+  "step4.copyIdFailed": "Échec",
+  "step4.copyIdHint": "Copier l'identifiant de l'évaluation",
+  "step4.generating": "Génération…",
+  "step4.downloaded": "Téléchargé",
+  "step4.downloadFailed": "Échec — réessayer",
+  "step4.resetDone": "Évaluation réinitialisée",
 
   // Dashboard
   "dashboard.title": "Tableau de bord des résultats",
@@ -287,6 +323,10 @@ const fr: Record<MessageKey, string> = {
   "dashboard.familyHistory": "Antécédents familiaux",
   "dashboard.noSymptoms": "Aucun signalé",
   "dashboard.viewCta": "Démarrer une évaluation",
+  "dashboard.filterLabel": "Filtrer par niveau de risque",
+  "dashboard.filterAll": "Toutes",
+  "dashboard.filterHigh": "Risque élevé",
+  "dashboard.tableLabel": "Historique des évaluations",
 
   // Language toggle
   "lang.toggle": "Changer de langue",
